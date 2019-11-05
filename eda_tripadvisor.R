@@ -1,10 +1,8 @@
 library(tidyverse)
 library(tm)
-library(wordcloud)
 library(plotrix)
 library(dendextend)
 library(quanteda)
-library(widyr)
 library(SnowballC)
 
 # Load trip advisor reviews
@@ -187,6 +185,8 @@ master_reviewer <- tibble(rowname = "",
                               rating_label = "",
                               reviewer = "")
 
+# Loop through top reviewers and generate master reviewer df for plot
+# Use same methods to generate figure 1
 for (rev in reviewer_names){
 
   tmp_df <- top_reviewers %>% 
@@ -221,6 +221,7 @@ for (rev in reviewer_names){
     top_n(5) %>% 
     mutate(rating_label = "Negative")
   
+  # If user only has negative or positive reviews, exclude for now
   if (nrow(tmp_neg_count) != 0 & nrow(tmp_pos_count) != 0 ){
     tmp_combine <- bind_rows(tmp_pos_count, tmp_neg_count) %>% 
       mutate(reviewer = rep(rev, nrow(tmp_pos_count) + nrow(tmp_neg_count) ))
@@ -230,10 +231,11 @@ for (rev in reviewer_names){
 
 }
 
+# Remove initialization row
 master_reviewer <- master_reviewer %>% 
   filter(cnt != 0) 
 
-
+# Figure 2
 p3 <- ggplot(master_reviewer, aes(x = reorder(rowname, cnt), y = cnt, fill = rating_label)) +
   geom_bar(position="stack", stat="identity") +
   facet_wrap(.~ reviewer, scales = "free") +
