@@ -4,7 +4,6 @@ library(rvest)
 #set base url for country
 base_url <- "https://www.tripadvisor.com/Hotels-g150768-oa"
 country_url <- "-Mexico-Hotels.html"
-
 num_pages <- 11 # Number of pages for Mexico
 city_urls <- c()
 
@@ -14,9 +13,7 @@ for (i in 1:num_pages){
   tmp_page <- read_html(tmp_url) %>% 
     html_nodes(".city") %>% 
     html_attr("href")
-  
   city_urls <- c(city_urls, tmp_page)
-  
   Sys.sleep(0.5)
 }
 
@@ -24,11 +21,9 @@ for (i in 1:num_pages){
 listings <- c()
 for(i in 1:length(city_urls)){
   tmp_url <- paste0("https://www.tripadvisor.com", city_urls[i])
-  
   tmp_page <- read_html(tmp_url) %>% 
     html_nodes(".prominent") %>% 
     html_attr("href")
-  
   listings <- c(listings, tmp_page)
   Sys.sleep(1)
 }
@@ -73,11 +68,9 @@ extract_reviews <- function(pre_str, post_str, rev_page){
                               comment = reviews)
   
   return(tmp_dataframe)
-  
   Sys.sleep(0.5) #sys.sleep to avoid IP ban
   
 }
-
 # create master df
 master_df <- tibble(hotel_name = "",
        review_title = "",
@@ -85,10 +78,8 @@ master_df <- tibble(hotel_name = "",
        rating = 0,
        comment = "")
 
-
 # for all listing, extract reviews in tmp df and append to master_df
 for (j in 2:length(listings)){
- 
   # Main page url
   main_url <-  paste0("https://www.tripadvisor.com/",listings[j])
   
@@ -96,7 +87,6 @@ for (j in 2:length(listings)){
   pre_str <- str_extract(main_url, ".*Reviews-")
   post_str <- str_extract(main_url, "Reviews-.*") %>% 
     str_remove("Reviews")
-  
   tmp_html <- read_html(main_url)  
   
   # Count how many reviews are present to set iteration
@@ -125,9 +115,7 @@ for (j in 2:length(listings)){
       
       page_idx = page_idx + 5 # for every review page, add 5 to access new reviews
     }
-    
   } 
-  
   print(paste(j, idx_str)) # Avoid system idle
   master_df <- bind_rows(master_df, review_df) # bind to master df
   saveRDS(master_df, "tripadvisor_reviews.rds") # save master df in case connection is lost

@@ -4,7 +4,6 @@ library(plotrix)
 library(dendextend)
 library(quanteda)
 library(SnowballC)
-
 # Load trip advisor reviews
 tripadvisor <- readRDS("./tripadvisor_reviews.rds") %>% 
   filter(rating != 0) %>% 
@@ -13,10 +12,8 @@ tripadvisor <- readRDS("./tripadvisor_reviews.rds") %>%
          comment = str_to_lower(str_trim(comment)),
          reviewer = factor(str_remove(author_info,"\\s\\bwrote.*")),
          rating_label = if_else(rating <=3, "Bad", "Good"))
-
 # Check rating balance from dataset
 #table(tripadvisor$rating_label) 
-
 # Extract positive reviews only
 pos_rev <- tripadvisor %>% 
   filter(rating_label == "Good")
@@ -24,29 +21,13 @@ pos_rev <- tripadvisor %>%
 # Extract negative reviews only
 neg_rev <- tripadvisor %>% 
   filter(rating_label == "Bad")
-
 # Get top n reviewers
 n_revs <- 5
-top_15 <- tripadvisor %>%
-  group_by(reviewer) %>% 
-  count() %>% 
-  arrange(desc(n)) %>% 
-  ungroup() %>% 
-  top_n(n_revs) %>% 
-  select(reviewer) %>%
-  mutate(reviewer = as.character(reviewer))
-
+top_15 <- tripadvisor %>% group_by(reviewer) %>% count() %>% arrange(desc(n)) %>% ungroup() %>% top_n(n_revs) %>% select(reviewer) %>%mutate(reviewer = as.character(reviewer))
 # Exclude anonymous reviewers
 top_reviewers <- tripadvisor %>% 
   filter(reviewer %in% top_15$reviewer) %>% 
   filter(!(reviewer %in% c("A TripAdvisor Member") ))
-
-
-# Count balance of reviews
-#cnts_top_rev <- top_reviewers %>% 
-#  group_by(reviewer, rating_label) %>% 
-#  count()
-
 
 # Get possible words specifying the hotel
 hotel_name_words <- sapply(listings, 
@@ -57,7 +38,6 @@ hotel_name_words <- sapply(listings,
                                unlist() %>% unique()
                              return(tmp_str)
                              })
-
 # Combine words
 hotel_name_words <- hotel_name_words %>% unlist() %>% paste() %>% unique()
   
@@ -68,7 +48,6 @@ common_words <- c("but", "we", "also", "get","like",
                   "night", "two", "day", "amazing", "best",
                   "mexico", "went", "make", "mexican", "see", "fiesta",
                   "cabo", "great", "nice", "good")
-
 # combine all words
 extra_words <- c(common_words, hotel_name_words)
 
@@ -81,7 +60,6 @@ build_corpus <- function(df, extra_w ){
     tm_map(., removeWords, stopwords("spanish")) %>% 
     tm_map(., removeWords, extra_w ) %>%                # Remove extra words provided
     tm_map(., stemDocument)
-  
   return(corpus)
 }
 
@@ -127,10 +105,8 @@ p1 <- ggplot(cnt_df, aes(x = reorder(rowname, cnt), y = cnt, fill = rating_label
   coord_flip() +
   theme(axis.text.x = element_text(size = 7),
         legend.position = "bottom")
-
 ggsave(filename = "./figure1.png", plot = p1, device = "png", dpi = 150, units = "in",
        width = 5, height = 5)
-
 
 # Helper function to build ngrams
 build_ngrams <- function(df, n_gram, extra_w ){
@@ -140,7 +116,6 @@ build_ngrams <- function(df, n_gram, extra_w ){
     tokens_remove(extra_w, padding = TRUE) %>% 
     tokens_ngrams(n = n_gram) %>%
     dfm()
-  
   return(tmp_ngram)
 }
 
@@ -172,10 +147,8 @@ p2 <- ggplot(trigram_combined, aes(x = reorder(rowname, cnt), y = cnt, fill = ra
   theme(axis.text.x = element_text(size = 7),
         axis.text.y = element_text(size = 7),
         legend.position = "bottom")
-
 ggsave(filename = "./figure1a.png", plot = p2, device = "png", dpi = 150, units = "in",
        width = 5, height = 5)
-
 
 # Get top reviewer names
 reviewer_names <- unique(as.character(top_reviewers$reviewer))
@@ -184,14 +157,11 @@ master_reviewer <- tibble(rowname = "",
                               cnt = 0,
                               rating_label = "",
                               reviewer = "")
-
 # Loop through top reviewers and generate master reviewer df for plot
 # Use same methods to generate figure 1
 for (rev in reviewer_names){
-
   tmp_df <- top_reviewers %>% 
     filter(as.character(reviewer) == rev)
-  
   tmp_pos <- tmp_df %>% 
     filter(rating_label == "Good")
   
@@ -205,8 +175,6 @@ for (rev in reviewer_names){
     arrange(desc(cnt)) %>% 
     top_n(5) %>% 
     mutate(rating_label = "Positive")
-  
-  
   tmp_neg <- tmp_df %>% 
     filter(rating_label == "Bad")
   tmp_neg_corpus <- build_corpus(tmp_neg, extra_words)
@@ -228,7 +196,6 @@ for (rev in reviewer_names){
     
     master_reviewer <- bind_rows(master_reviewer, tmp_combine)
   }
-
 }
 
 # Remove initialization row
@@ -248,7 +215,6 @@ p3 <- ggplot(master_reviewer, aes(x = reorder(rowname, cnt), y = cnt, fill = rat
   theme(axis.text.x = element_text(size = 7),
         axis.text.y = element_text(size = 7),
         legend.position = "bottom")
-
 ggsave(filename = "./figure2.png", plot = p3, device = "png", dpi = 150, units = "in",
        width = 5, height = 5)
 
