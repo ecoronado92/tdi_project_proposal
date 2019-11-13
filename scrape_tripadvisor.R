@@ -60,26 +60,33 @@ extract_reviews <- function(pre_str, post_str, rev_page){
     html_nodes(".social-member-event-MemberEventOnObjectBlock__event_type--3njyv span") %>% 
     html_text()
   
+  user <- tripadv_page %>% 
+    html_nodes(".social-member-event-MemberEventOnObjectBlock__member--35-jC") %>% 
+    html_attr("href") %>% 
+    str_remove(., ".*Profile\\/")
+  
   # build df to store review info
   tmp_dataframe <- tibble(hotel_name = list_name,
                               review_title = title,
                               author_info = author,
+                              user_name = user,
                               rating = ratings,
                               comment = reviews)
   
   return(tmp_dataframe)
-  Sys.sleep(0.5) #sys.sleep to avoid IP ban
+  Sys.sleep(5) #sys.sleep to avoid IP ban
   
 }
 # create master df
 master_df <- tibble(hotel_name = "",
        review_title = "",
        author_info = "",
+       user_name = "",
        rating = 0,
        comment = "")
 
 # for all listing, extract reviews in tmp df and append to master_df
-for (j in 2:length(listings)){
+for (j in 3021:length(listings)){
   # Main page url
   main_url <-  paste0("https://www.tripadvisor.com/",listings[j])
   

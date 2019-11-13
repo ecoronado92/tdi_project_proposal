@@ -22,12 +22,14 @@ pos_rev <- tripadvisor %>%
 neg_rev <- tripadvisor %>% 
   filter(rating_label == "Bad")
 # Get top n reviewers
-n_revs <- 5
-top_15 <- tripadvisor %>% group_by(reviewer) %>% count() %>% arrange(desc(n)) %>% ungroup() %>% top_n(n_revs) %>% select(reviewer) %>%mutate(reviewer = as.character(reviewer))
+n_revs <- 15
+top_15 <- tripadvisor %>% group_by(user_name) %>% count() %>% 
+  arrange(desc(n)) %>% ungroup() %>% top_n(n_revs) %>% 
+  select(user_name) %>% mutate(user_name = as.character(user_name))
 # Exclude anonymous reviewers
 top_reviewers <- tripadvisor %>% 
-  filter(reviewer %in% top_15$reviewer) %>% 
-  filter(!(reviewer %in% c("A TripAdvisor Member") ))
+  filter(user_name %in% top_15$user_name) %>% 
+  filter(!(user_name %in% c("A TripAdvisor Member", "", "null") ))
 
 # Get possible words specifying the hotel
 hotel_name_words <- sapply(listings, 
@@ -150,8 +152,12 @@ p2 <- ggplot(trigram_combined, aes(x = reorder(rowname, cnt), y = cnt, fill = ra
 ggsave(filename = "./figure1a.png", plot = p2, device = "png", dpi = 150, units = "in",
        width = 5, height = 5)
 
+top_names <- top_reviewers %>% 
+  group_by(user_name) %>% 
+  count() %>% 
+  arrange(desc(n)) 
 # Get top reviewer names
-reviewer_names <- unique(as.character(top_reviewers$reviewer))
+reviewer_names <- unique(as.character(top_names$user_name [1:5]))
 
 master_reviewer <- tibble(rowname = "",
                               cnt = 0,
@@ -161,7 +167,7 @@ master_reviewer <- tibble(rowname = "",
 # Use same methods to generate figure 1
 for (rev in reviewer_names){
   tmp_df <- top_reviewers %>% 
-    filter(as.character(reviewer) == rev)
+    filter(as.character(user_name) == rev)
   tmp_pos <- tmp_df %>% 
     filter(rating_label == "Good")
   
@@ -203,7 +209,7 @@ master_reviewer <- master_reviewer %>%
   filter(cnt != 0) 
 
 # Figure 2
-p3 <- ggplot(master_reviewer, aes(x = reorder(rowname, cnt), y = cnt, fill = rating_label)) +
+p4 <- ggplot(master_reviewer, aes(x = reorder(rowname, cnt), y = cnt, fill = rating_label)) +
   geom_bar(position="stack", stat="identity") +
   facet_wrap(.~ reviewer, scales = "free") +
   theme_bw() +
@@ -215,7 +221,8 @@ p3 <- ggplot(master_reviewer, aes(x = reorder(rowname, cnt), y = cnt, fill = rat
   theme(axis.text.x = element_text(size = 7),
         axis.text.y = element_text(size = 7),
         legend.position = "bottom")
-ggsave(filename = "./figure2.png", plot = p3, device = "png", dpi = 150, units = "in",
+
+ggsave(filename = "./figure4.png", plot = p4, device = "png", dpi = 150, units = "in",
        width = 5, height = 5)
 
 
