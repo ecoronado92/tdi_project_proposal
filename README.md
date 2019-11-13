@@ -11,6 +11,7 @@ The following repo contains an early rough draft of The Data Incubator 2020 proj
  - `review_title`: title given to review
  - `comment`: user review
  - `author_info`: simple information about who wrote the review (e.g. username and date)
+ - `user_name` : user name (uniquely identifies reviewer)
  - `rating`: numerical value of rating based on 1-5 bubbles in webpage
  
  
